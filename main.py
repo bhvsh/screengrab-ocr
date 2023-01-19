@@ -5,6 +5,7 @@ import subprocess
 import pyperclip
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QGridLayout, QFileDialog, QPlainTextEdit, QStyle
 from PyQt5.QtCore import pyqtSlot, Qt
+from PIL import ImageGrab
 import pyautogui
 
 class App(QWidget):
@@ -42,11 +43,17 @@ class App(QWidget):
         self.button.setToolTip('Click to upload it from the local storage.')
         self.button.clicked.connect(self.on_click_upload)
         self.grid.addWidget(self.button, 2, 0)
+
+        self.button = QPushButton('Load Screenshot from Clipboard', self)
+        self.button.setIcon(self.style().standardIcon(getattr(QStyle, 'SP_FileDialogContentsView')))
+        self.button.setToolTip('Click to upload it from your clipboard.')
+        self.button.clicked.connect(self.on_click_clipboard)
+        self.grid.addWidget(self.button, 3, 0)
         
         self.textbox = QPlainTextEdit(self)
         self.textbox.setReadOnly(True)
         self.textbox.setPlainText("Ready to capture a screenshot.\nRequires installation of Tesseract Open Source OCR Engine.\nLink: https://tesseract-ocr.github.io/tessdoc/Installation.html")
-        self.grid.addWidget(self.textbox, 3, 0)
+        self.grid.addWidget(self.textbox, 4, 0)
         
         self.show()
 
@@ -64,7 +71,6 @@ class App(QWidget):
         self.label.setText("The OCR result has been copied to your clipboard.\nLast run: {:.2f} seconds".format(time.perf_counter() - t_start))
         self.update()
 
-    @pyqtSlot()
     def on_click_upload(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -80,6 +86,27 @@ class App(QWidget):
             self.button.setEnabled(True)
             self.label.setText("The OCR result has been copied to your clipboard.\nLast run: {:.2f} seconds".format(time.perf_counter() - t_start))
             self.update()
+
+    def on_click_clipboard(self):
+        self.label.setText("Processing...")
+        self.button.setEnabled(False)
+        self.textbox.setPlainText("")
+        self.update()
+        time.sleep(0.1)
+        t_start = time.perf_counter()
+        try:
+            imgrab = ImageGrab.grabclipboard()
+            imgrab.save('screenshot.png','PNG')
+            self.perform_ocr()
+            self.button.setEnabled(True)
+            self.label.setText("The OCR result has been copied to your clipboard.\nLast run: {:.2f} seconds".format(time.perf_counter() - t_start))
+            self.update()
+        except:
+            self.label.setText("Click the button below to capture or load a screenshot.")
+            self.textbox.setPlainText("No image found in the clipboard.")
+            self.button.setEnabled(True)
+            self.update()
+            return
 
     def capture_screenshot(self):
         width, height= pyautogui.size()
