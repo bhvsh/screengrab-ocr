@@ -1,4 +1,4 @@
-Pillow==10.0.1
+Pillow==10.2.0
 pyperclip==1.8.2
 PyAutoGUI==0.9.53
 PyQt5==5.15.4
